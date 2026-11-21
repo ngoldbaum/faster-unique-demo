@@ -149,7 +149,7 @@ else:
 timings = saved["timings"]
 
 plt.rcParams.update({"font.size": 13, "axes.spines.top": False, "axes.spines.right": False})
-fig, axes = plt.subplots(2, 4, figsize=(16, 6.6), height_ratios=[3.2, 1.5], layout="constrained")
+fig, axes = plt.subplots(2, 4, figsize=(16, 6.2), height_ratios=[3.2, 1.5], layout="constrained")
 pictures = images()
 for column, (key, workflow) in enumerate(WORKFLOWS.items()):
     top, bottom = axes[0, column], axes[1, column]
@@ -174,8 +174,6 @@ for column, (key, workflow) in enumerate(WORKFLOWS.items()):
     bottom.set_xlim(0, groups["with I/O"]["main"] * 1.25)
     bottom.set_xlabel("seconds")
     bottom.set_title(workflow["data"], loc="left", fontsize=12, color="#444444")
-fig.suptitle(f"np.unique on real label data, alone and with reading the file   ({saved['cpu']})",
-             x=0.01, ha="left", fontsize=17)
 fig.legend(handles=[Patch(color=COLORS[build], label=build) for build in BUILDS],
            loc="outside lower center", ncols=2, frameon=False)
 fig.savefig(HERE / "summary.png", dpi=150, facecolor="white")
