@@ -18,8 +18,7 @@ from matplotlib.patches import Patch
 HERE = Path(__file__).parent
 DATA = HERE / "data"
 BUILDS = {"main": HERE / ".pixi/envs/main/bin/python", "this PR": HERE / ".pixi/envs/tables/bin/python"}
-COLORS = {"main": "#5f6368", "this PR": "#1a73e8"}
-READ_COLOR = "#d5d8dc"
+COLORS = {"main": "#9aa0a6", "this PR": "#1a73e8"}
 TIMINGS = HERE / "summary-timings.json"
 
 # Runs in each build: read a dataset from the file its publisher distributes,
@@ -150,7 +149,7 @@ else:
 timings = saved["timings"]
 
 plt.rcParams.update({"font.size": 13, "axes.spines.top": False, "axes.spines.right": False})
-fig, axes = plt.subplots(2, 4, figsize=(16, 6.3), height_ratios=[3.2, 1], layout="constrained")
+fig, axes = plt.subplots(2, 4, figsize=(16, 6.6), height_ratios=[3.2, 1.5], layout="constrained")
 pictures = images()
 for column, (key, workflow) in enumerate(WORKFLOWS.items()):
     top, bottom = axes[0, column], axes[1, column]
@@ -159,25 +158,25 @@ for column, (key, workflow) in enumerate(WORKFLOWS.items()):
     top.set_title(workflow["title"], loc="left", fontsize=13.5, fontweight="bold")
 
     seconds = timings[key]
-    names = list(BUILDS)
-    total = {n: seconds[n]["read"] + seconds[n]["unique"] for n in names}
-    bottom.barh(names, [seconds[n]["read"] for n in names], color=READ_COLOR)
-    bottom.barh(names, [seconds[n]["unique"] for n in names], left=[seconds[n]["read"] for n in names],
-                color=[COLORS[n] for n in names])
+    groups = {"np.unique": {n: seconds[n]["unique"] for n in BUILDS},
+              "with I/O": {n: seconds[n]["read"] + seconds[n]["unique"] for n in BUILDS}}
+    for g, values in enumerate(groups.values()):
+        for b, (build, value) in enumerate(values.items()):
+            y = g * 2.6 + b
+            bottom.barh(y, value, height=0.86, color=COLORS[build])
+            text = f" {value:.2f} s" if value < 10 else f" {value:.1f} s"
+            if build != "main":
+                text += f"   {values['main'] / value:.1f}x faster"
+            bottom.text(value, y, text, va="center", fontweight="bold" if build != "main" else "normal")
+    bottom.set_yticks([0.5, 3.1], list(groups))
+    bottom.tick_params(axis="y", length=0)
     bottom.invert_yaxis()
-    bottom.set_xlim(0, total["main"] * 1.22)
-    faster = seconds["main"]["unique"] / seconds["this PR"]["unique"]
+    bottom.set_xlim(0, groups["with I/O"]["main"] * 1.25)
     bottom.set_xlabel("seconds")
-    bottom.set_title(workflow["data"] + "\n\n", loc="left", fontsize=12, color="#444444")
-    bottom.text(0, 1.06, f"np.unique: {faster:.1f}x faster\nwith I/O: {total['main'] / total['this PR']:.1f}x faster",
-                transform=bottom.transAxes, fontsize=13, fontweight="bold", color=COLORS["this PR"])
-    for i, n in enumerate(names):
-        bottom.text(total[n], i, f" {total[n]:.2f} s" if total[n] < 10 else f" {total[n]:.1f} s", va="center")
-fig.suptitle(f"Read a label file and list its labels: main against this PR   ({saved['cpu']})",
+    bottom.set_title(workflow["data"], loc="left", fontsize=12, color="#444444")
+fig.suptitle(f"np.unique on real label data, alone and with reading the file   ({saved['cpu']})",
              x=0.01, ha="left", fontsize=17)
-fig.legend(handles=[Patch(color=READ_COLOR, label="read and decode the file"),
-                    Patch(color=COLORS["main"], label="np.unique, main"),
-                    Patch(color=COLORS["this PR"], label="np.unique, this PR")],
-           loc="outside lower center", ncols=3, frameon=False)
+fig.legend(handles=[Patch(color=COLORS[build], label=build) for build in BUILDS],
+           loc="outside lower center", ncols=2, frameon=False)
 fig.savefig(HERE / "summary.png", dpi=150, facecolor="white")
 print("wrote", HERE / "summary.png")
