@@ -195,7 +195,7 @@ for column, (key, workflow) in enumerate(WORKFLOWS.items()):
     bottom.set_title(workflow["data"], loc="left", fontsize=12, color="#444444")
 fig.legend(handles=[Patch(color=COLORS[build], label=build) for build in BUILDS],
            loc="outside lower center", ncols=2, frameon=False)
-fig.text(0.995, 0.012, saved["machine"] + "\nfiles in the page cache, best of 3 runs (C. elegans: 1 run)",
+fig.text(0.995, 0.012, saved["machine"],
          ha="right", va="bottom", fontsize=8.5, color="#666666")
 fig.savefig(HERE / "summary.png", dpi=300, facecolor="white")
 print("wrote", HERE / "summary.png")
