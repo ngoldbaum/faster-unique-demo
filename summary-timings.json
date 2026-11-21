@@ -1,5 +1,5 @@
 {
- "cpu": "Apple M1",
+ "machine": "Apple M1, 16 GB, macOS 26.6.2, clang 21.0.0, Python 3.14.10",
  "timings": {
   "embryo": {
    "main": {

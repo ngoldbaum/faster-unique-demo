@@ -4,6 +4,7 @@
     pixi run plot --replot     # redraws from the timings of the last run
 """
 import json
+import os
 import platform
 import subprocess
 import sys
@@ -62,22 +63,26 @@ WORKFLOWS = {
     "embryo": {
         "title": "3D C. elegans cell tracking",
         "data": "Cell Tracking Challenge, 385 frames\nuint16, 4.9 billion voxels",
+        "source": "doi:10.1038/s41592-023-01879-y",
         "paths": [DATA / "celegans/01", DATA / "celegans/02"],
         "repeats": 1,
     },
     "neurons": {
         "title": "Fly brain neuron segmentation",
         "data": "CREMI sample A, electron microscopy\nuint64, 195 million voxels",
+        "source": "cremi.org",
         "paths": [DATA / "cremi_sample_A.hdf"],
     },
     "atlas": {
         "title": "Mouse brain atlas annotation",
         "data": "Allen Mouse Brain CCFv3, 25 µm\nuint32, 77 million voxels",
+        "source": "doi:10.1016/j.cell.2020.04.007",
         "paths": [DATA / "allen_annotation_25.nrrd"],
     },
     "land": {
         "title": "Land cover classification",
         "data": "ESA WorldCover 2021, one tile\nuint8, 1.3 billion pixels",
+        "source": "doi:10.5281/zenodo.7254221",
         "paths": [DATA / "worldcover_N39W108.tif"],
     },
 }
@@ -141,10 +146,23 @@ def cpu():
     return platform.machine()
 
 
+def machine():
+    """The CPU, memory, operating system and the compiler NumPy was built with."""
+    query = ("import json, numpy, platform; c = numpy.show_config(mode='dicts')['Compilers']['c']; "
+             "print(json.dumps([c['name'], c['version'], platform.python_version()]))")
+    compiler, version, python = json.loads(subprocess.run(
+        [BUILDS["this PR"], "-c", query], capture_output=True, text=True, check=True).stdout)
+    memory = os.sysconf("SC_PAGE_SIZE") * os.sysconf("SC_PHYS_PAGES") / 2**30
+    system = f"macOS {platform.mac_ver()[0]}" if sys.platform == "darwin" else f"Linux {platform.release()}"
+    return f"{cpu()}, {memory:.0f} GB, {system}, {compiler} {version}, Python {python}"
+
+
 if "--replot" in sys.argv:
     saved = json.loads(TIMINGS.read_text())
 else:
-    saved = {"cpu": cpu(), "timings": measure()}
+    saved = {"timings": measure()}
+if "machine" not in saved:
+    saved = {"machine": machine(), "timings": saved["timings"]}
     TIMINGS.write_text(json.dumps(saved, indent=1) + "\n")
 timings = saved["timings"]
 
@@ -156,6 +174,7 @@ for column, (key, workflow) in enumerate(WORKFLOWS.items()):
     top.imshow(crop(pictures[key]), interpolation="nearest")
     top.axis("off")
     top.set_title(workflow["title"], loc="left", fontsize=13.5, fontweight="bold")
+    top.text(0, -0.02, workflow["source"], transform=top.transAxes, va="top", fontsize=8.5, color="#666666")
 
     seconds = timings[key]
     groups = {"np.unique": {n: seconds[n]["unique"] for n in BUILDS},
@@ -176,5 +195,7 @@ for column, (key, workflow) in enumerate(WORKFLOWS.items()):
     bottom.set_title(workflow["data"], loc="left", fontsize=12, color="#444444")
 fig.legend(handles=[Patch(color=COLORS[build], label=build) for build in BUILDS],
            loc="outside lower center", ncols=2, frameon=False)
-fig.savefig(HERE / "summary.png", dpi=150, facecolor="white")
+fig.text(0.995, 0.012, saved["machine"] + "\nfiles in the page cache, best of 3 runs (C. elegans: 1 run)",
+         ha="right", va="bottom", fontsize=8.5, color="#666666")
+fig.savefig(HERE / "summary.png", dpi=300, facecolor="white")
 print("wrote", HERE / "summary.png")
