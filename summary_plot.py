@@ -169,7 +169,7 @@ for column, (key, workflow) in enumerate(WORKFLOWS.items()):
     faster = seconds["main"]["unique"] / seconds["this PR"]["unique"]
     bottom.set_xlabel("seconds")
     bottom.set_title(workflow["data"] + "\n\n", loc="left", fontsize=12, color="#444444")
-    bottom.text(0, 1.06, f"np.unique: {faster:.1f}x faster\nwith file read: {total['main'] / total['this PR']:.1f}x faster",
+    bottom.text(0, 1.06, f"np.unique: {faster:.1f}x faster\nwith I/O: {total['main'] / total['this PR']:.1f}x faster",
                 transform=bottom.transAxes, fontsize=13, fontweight="bold", color=COLORS["this PR"])
     for i, n in enumerate(names):
         bottom.text(total[n], i, f" {total[n]:.2f} s" if total[n] < 10 else f" {total[n]:.1f} s", va="center")
