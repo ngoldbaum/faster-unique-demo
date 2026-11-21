@@ -1,0 +1,37 @@
+[workspace]
+name = "faster-unique-demo"
+channels = ["conda-forge"]
+platforms = ["osx-arm64", "linux-64", "linux-aarch64"]
+
+[dependencies]
+python = "3.14.*"
+
+[pypi-dependencies]
+tifffile = "*"
+imagecodecs = "*"
+
+# NumPy main, built from source
+[feature.main.pypi-dependencies]
+numpy = { git = "https://github.com/numpy/numpy", rev = "e092b9144edcdf1c52f46b4b2a0ad0869109c500" }
+
+# the same commit with the np.unique changes, built from the submodule
+[feature.tables.pypi-dependencies]
+numpy = { path = "numpy" }
+
+[feature.notebook.pypi-dependencies]
+numpy = "*"
+jupyterlab = "*"
+matplotlib = "*"
+h5py = "*"
+pillow = "*"
+
+[feature.notebook.tasks]
+builds = { cmd = "pixi install --all", description = "Build both NumPy variants (about ten minutes)" }
+data = { cmd = "python fetch_data.py", description = "Download and unpack the label data" }
+lab = { cmd = "jupyter lab demo.ipynb", depends-on = ["builds", "data"] }
+plot = { cmd = "python summary_plot.py", depends-on = ["builds", "data"] }
+
+[environments]
+default = ["notebook"]
+main = ["main"]
+tables = ["tables"]

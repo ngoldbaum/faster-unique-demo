@@ -1,0 +1,4 @@
+[submodule "numpy"]
+	path = numpy
+	url = https://github.com/ngoldbaum/numpy.git
+	branch = faster-unique
