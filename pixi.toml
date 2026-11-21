@@ -9,6 +9,7 @@ python = "3.14.*"
 [pypi-dependencies]
 tifffile = "*"
 imagecodecs = "*"
+h5py = "*"
 
 # NumPy main, built from source
 [feature.main.pypi-dependencies]
@@ -22,7 +23,6 @@ numpy = { path = "numpy" }
 numpy = "*"
 jupyterlab = "*"
 matplotlib = "*"
-h5py = "*"
 pillow = "*"
 
 [feature.notebook.tasks]

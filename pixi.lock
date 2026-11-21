@@ -424,6 +424,7 @@ environments:
       - pypi: git+https://github.com/numpy/numpy?rev=e092b9144edcdf1c52f46b4b2a0ad0869109c500#e092b9144edcdf1c52f46b4b2a0ad0869109c500
       - pypi: https://files.pythonhosted.org/packages/cf/3a/483491be6f7eb070d1c22b1182bbbc0243e85bf5903fafe3f80b6aeb3dba/tifffile-2026.11.16-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/ef/ec/1de885257979fd92a560f31b9ec2774983d29a204fca05584cc41a211f19/imagecodecs-2026.11.11-cp312-abi3-manylinux_2_28_x86_64.whl
+      - pypi: https://files.pythonhosted.org/packages/f1/16/d905e7f53e661ce2c24686c38048d8e2b750ffc4350009d41c4e6c6c9826/h5py-3.16.0-cp314-cp314-manylinux_2_28_x86_64.whl
       linux-aarch64:
       - conda: https://conda.anaconda.org/conda-forge/linux-aarch64/_openmp_mutex-4.5-20_gnu.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-aarch64/bzip2-1.0.8-h4777abc_10.conda
@@ -449,6 +450,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/tzdata-2026e-h5d301ff_0.conda
       - pypi: git+https://github.com/numpy/numpy?rev=e092b9144edcdf1c52f46b4b2a0ad0869109c500#e092b9144edcdf1c52f46b4b2a0ad0869109c500
       - pypi: https://files.pythonhosted.org/packages/04/9d/a2dacd23457bf3ac7676c9956d7d0fd45934fa424a9e54866b5f9256e411/imagecodecs-2026.11.11-cp312-abi3-manylinux_2_28_aarch64.whl
+      - pypi: https://files.pythonhosted.org/packages/58/a5/4964bc0e91e86340c2bbda83420225b2f770dcf1eb8a39464871ad769436/h5py-3.16.0-cp314-cp314-manylinux_2_28_aarch64.whl
       - pypi: https://files.pythonhosted.org/packages/cf/3a/483491be6f7eb070d1c22b1182bbbc0243e85bf5903fafe3f80b6aeb3dba/tifffile-2026.11.16-py3-none-any.whl
       osx-arm64:
       - conda: https://conda.anaconda.org/conda-forge/noarch/ca-certificates-2026.10.23-hbd8a1cb_0.conda
@@ -469,6 +471,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/tk-8.6.13-hbeba79b_4.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/zstd-1.5.7-hf451053_7.conda
       - pypi: git+https://github.com/numpy/numpy?rev=e092b9144edcdf1c52f46b4b2a0ad0869109c500#e092b9144edcdf1c52f46b4b2a0ad0869109c500
+      - pypi: https://files.pythonhosted.org/packages/6a/b7/9366ed44ced9b7ef357ab48c94205280276db9d7f064aa3012a97227e966/h5py-3.16.0-cp314-cp314-macosx_11_0_arm64.whl
       - pypi: https://files.pythonhosted.org/packages/6b/0d/e7484677015f47a80896890c430f7bc475d544a64a4cda88b3a781c8761a/imagecodecs-2026.11.11-cp312-abi3-macosx_12_0_arm64.whl
       - pypi: https://files.pythonhosted.org/packages/cf/3a/483491be6f7eb070d1c22b1182bbbc0243e85bf5903fafe3f80b6aeb3dba/tifffile-2026.11.16-py3-none-any.whl
   tables:
@@ -503,6 +506,7 @@ environments:
       - pypi: ./numpy
       - pypi: https://files.pythonhosted.org/packages/cf/3a/483491be6f7eb070d1c22b1182bbbc0243e85bf5903fafe3f80b6aeb3dba/tifffile-2026.11.16-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/ef/ec/1de885257979fd92a560f31b9ec2774983d29a204fca05584cc41a211f19/imagecodecs-2026.11.11-cp312-abi3-manylinux_2_28_x86_64.whl
+      - pypi: https://files.pythonhosted.org/packages/f1/16/d905e7f53e661ce2c24686c38048d8e2b750ffc4350009d41c4e6c6c9826/h5py-3.16.0-cp314-cp314-manylinux_2_28_x86_64.whl
       linux-aarch64:
       - conda: https://conda.anaconda.org/conda-forge/linux-aarch64/_openmp_mutex-4.5-20_gnu.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-aarch64/bzip2-1.0.8-h4777abc_10.conda
@@ -528,6 +532,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/tzdata-2026e-h5d301ff_0.conda
       - pypi: ./numpy
       - pypi: https://files.pythonhosted.org/packages/04/9d/a2dacd23457bf3ac7676c9956d7d0fd45934fa424a9e54866b5f9256e411/imagecodecs-2026.11.11-cp312-abi3-manylinux_2_28_aarch64.whl
+      - pypi: https://files.pythonhosted.org/packages/58/a5/4964bc0e91e86340c2bbda83420225b2f770dcf1eb8a39464871ad769436/h5py-3.16.0-cp314-cp314-manylinux_2_28_aarch64.whl
       - pypi: https://files.pythonhosted.org/packages/cf/3a/483491be6f7eb070d1c22b1182bbbc0243e85bf5903fafe3f80b6aeb3dba/tifffile-2026.11.16-py3-none-any.whl
       osx-arm64:
       - conda: https://conda.anaconda.org/conda-forge/noarch/ca-certificates-2026.10.23-hbd8a1cb_0.conda
@@ -548,6 +553,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/tk-8.6.13-hbeba79b_4.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/zstd-1.5.7-hf451053_7.conda
       - pypi: ./numpy
+      - pypi: https://files.pythonhosted.org/packages/6a/b7/9366ed44ced9b7ef357ab48c94205280276db9d7f064aa3012a97227e966/h5py-3.16.0-cp314-cp314-macosx_11_0_arm64.whl
       - pypi: https://files.pythonhosted.org/packages/6b/0d/e7484677015f47a80896890c430f7bc475d544a64a4cda88b3a781c8761a/imagecodecs-2026.11.11-cp312-abi3-macosx_12_0_arm64.whl
       - pypi: https://files.pythonhosted.org/packages/cf/3a/483491be6f7eb070d1c22b1182bbbc0243e85bf5903fafe3f80b6aeb3dba/tifffile-2026.11.16-py3-none-any.whl
 packages:

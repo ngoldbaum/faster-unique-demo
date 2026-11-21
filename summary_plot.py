@@ -1,4 +1,4 @@
-"""Time np.unique on four real label datasets in both builds and draw the summary figure.
+"""Time reading four real label datasets and np.unique on them in both builds, and draw the summary figure.
 
     pixi run plot              # times both builds (a few minutes), writes summary.png
     pixi run plot --replot     # redraws from the timings of the last run
@@ -13,37 +13,50 @@ import matplotlib.pyplot as plt
 import numpy as np
 import tifffile
 from matplotlib import colormaps
+from matplotlib.patches import Patch
 
 HERE = Path(__file__).parent
 DATA = HERE / "data"
 BUILDS = {"main": HERE / ".pixi/envs/main/bin/python", "this PR": HERE / ".pixi/envs/tables/bin/python"}
-COLORS = {"main": "#9aa0a6", "this PR": "#1a73e8"}
+COLORS = {"main": "#5f6368", "this PR": "#1a73e8"}
+READ_COLOR = "#d5d8dc"
 TIMINGS = HERE / "summary-timings.json"
 
-# Runs in each build. A dataset is one .npy file, or a folder of TIFF frames
-# with one np.unique call per frame; only np.unique is timed.
+# Runs in each build: read a dataset from the file its publisher distributes,
+# then call np.unique, timing the two steps separately.
 WORKER = r"""
-import json, sys, time
+import gzip, json, sys, time
 from pathlib import Path
 import numpy as np
 
-def best(a, repeats):
-    times = []
-    for _ in range(repeats):
-        t0 = time.perf_counter()
-        np.unique(a)
-        times.append(time.perf_counter() - t0)
-    return min(times)
+def read(path):
+    if path.suffix == ".hdf":
+        import h5py
+        with h5py.File(path) as f:
+            return f["volumes/labels/neuron_ids"][...]
+    if path.suffix == ".nrrd":
+        raw = path.read_bytes()
+        return np.frombuffer(gzip.decompress(raw[raw.index(b"\n\n") + 2:]), dtype="<u4")
+    import tifffile
+    return tifffile.imread(path)
 
-seconds = 0.0
-for path in map(Path, sys.argv[1:]):
-    if path.is_dir():
-        import tifffile
-        for frame in sorted(path.glob("*.tif")):
-            seconds += best(tifffile.imread(frame), 1)
-    else:
-        seconds += best(np.load(path), 3)
-print(json.dumps(seconds))
+paths = []
+for path in map(Path, sys.argv[2:]):
+    paths += sorted(path.glob("*.tif")) if path.is_dir() else [path]
+best = None
+for _ in range(int(sys.argv[1])):
+    seconds = {"read": 0.0, "unique": 0.0}
+    for path in paths:
+        t0 = time.perf_counter()
+        a = read(path)
+        t1 = time.perf_counter()
+        np.unique(a)
+        seconds["read"] += t1 - t0
+        seconds["unique"] += time.perf_counter() - t1
+        del a
+    if best is None or sum(seconds.values()) < sum(best.values()):
+        best = seconds
+print(json.dumps(best))
 """
 
 WORKFLOWS = {
@@ -51,21 +64,22 @@ WORKFLOWS = {
         "title": "3D C. elegans cell tracking",
         "data": "Cell Tracking Challenge, 385 frames\nuint16, 4.9 billion voxels",
         "paths": [DATA / "celegans/01", DATA / "celegans/02"],
+        "repeats": 1,
     },
     "neurons": {
         "title": "Fly brain neuron segmentation",
         "data": "CREMI sample A, electron microscopy\nuint64, 195 million voxels",
-        "paths": [DATA / "cremi_neuron_ids.npy"],
+        "paths": [DATA / "cremi_sample_A.hdf"],
     },
     "atlas": {
         "title": "Mouse brain atlas annotation",
         "data": "Allen Mouse Brain CCFv3, 25 µm\nuint32, 77 million voxels",
-        "paths": [DATA / "allen_annotation_25.npy"],
+        "paths": [DATA / "allen_annotation_25.nrrd"],
     },
     "land": {
         "title": "Land cover classification",
         "data": "ESA WorldCover 2021, one tile\nuint8, 1.3 billion pixels",
-        "paths": [DATA / "worldcover_N39W108.npy"],
+        "paths": [DATA / "worldcover_N39W108.tif"],
     },
 }
 
@@ -110,10 +124,11 @@ def measure():
     for key, workflow in WORKFLOWS.items():
         timings[key] = {}
         for build, python in BUILDS.items():
-            out = subprocess.run([python, "-c", WORKER, *map(str, workflow["paths"])],
+            out = subprocess.run([python, "-c", WORKER, str(workflow.get("repeats", 3)), *map(str, workflow["paths"])],
                                  capture_output=True, text=True, check=True)
             timings[key][build] = json.loads(out.stdout)
-            print(f"{key:8s} {build:8s} {timings[key][build]:8.3f} s", flush=True)
+            print(f"{key:8s} {build:8s} read {timings[key][build]['read']:7.3f} s   "
+                  f"np.unique {timings[key][build]['unique']:7.3f} s", flush=True)
     return timings
 
 
@@ -135,7 +150,7 @@ else:
 timings = saved["timings"]
 
 plt.rcParams.update({"font.size": 13, "axes.spines.top": False, "axes.spines.right": False})
-fig, axes = plt.subplots(2, 4, figsize=(16, 5.4), height_ratios=[3.2, 1], layout="constrained")
+fig, axes = plt.subplots(2, 4, figsize=(16, 6.3), height_ratios=[3.2, 1], layout="constrained")
 pictures = images()
 for column, (key, workflow) in enumerate(WORKFLOWS.items()):
     top, bottom = axes[0, column], axes[1, column]
@@ -145,17 +160,24 @@ for column, (key, workflow) in enumerate(WORKFLOWS.items()):
 
     seconds = timings[key]
     names = list(BUILDS)
-    bottom.barh(names, [seconds[n] for n in names], color=[COLORS[n] for n in names])
+    total = {n: seconds[n]["read"] + seconds[n]["unique"] for n in names}
+    bottom.barh(names, [seconds[n]["read"] for n in names], color=READ_COLOR)
+    bottom.barh(names, [seconds[n]["unique"] for n in names], left=[seconds[n]["read"] for n in names],
+                color=[COLORS[n] for n in names])
     bottom.invert_yaxis()
-    bottom.set_xlim(0, seconds["main"] * 1.3)
-    bottom.set_xlabel("seconds in np.unique")
-    bottom.set_title(workflow["data"], loc="left", fontsize=12, color="#444444")
+    bottom.set_xlim(0, total["main"] * 1.22)
+    faster = seconds["main"]["unique"] / seconds["this PR"]["unique"]
+    bottom.set_xlabel("seconds")
+    bottom.set_title(workflow["data"] + "\n\n", loc="left", fontsize=12, color="#444444")
+    bottom.text(0, 1.06, f"np.unique: {faster:.1f}x faster\nwhole task: {total['main'] / total['this PR']:.1f}x faster",
+                transform=bottom.transAxes, fontsize=13, fontweight="bold", color=COLORS["this PR"])
     for i, n in enumerate(names):
-        text = f" {seconds[n]:.2f} s" if seconds[n] < 10 else f" {seconds[n]:.1f} s"
-        if n != "main":
-            text += f"   {seconds['main'] / seconds[n]:.1f}x faster"
-        bottom.text(seconds[n], i, text, va="center", fontweight="bold" if n != "main" else "normal")
-fig.suptitle(f"np.unique on real label data: main against this PR   ({saved['cpu']})",
+        bottom.text(total[n], i, f" {total[n]:.2f} s" if total[n] < 10 else f" {total[n]:.1f} s", va="center")
+fig.suptitle(f"Read a label file and list its labels: main against this PR   ({saved['cpu']})",
              x=0.01, ha="left", fontsize=17)
+fig.legend(handles=[Patch(color=READ_COLOR, label="read and decode the file"),
+                    Patch(color=COLORS["main"], label="np.unique, main"),
+                    Patch(color=COLORS["this PR"], label="np.unique, this PR")],
+           loc="outside lower center", ncols=3, frameon=False)
 fig.savefig(HERE / "summary.png", dpi=150, facecolor="white")
 print("wrote", HERE / "summary.png")
