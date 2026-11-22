@@ -179,7 +179,9 @@ if "machine" not in saved:
 timings = saved["timings"]
 
 plt.rcParams.update({"font.size": 13, "axes.spines.top": False, "axes.spines.right": False})
-fig, axes = plt.subplots(2, 4, figsize=(16, 6.6), height_ratios=[3.2, 1.5], layout="constrained")
+fig, axes = plt.subplots(2, 4, figsize=(16, 6.8), height_ratios=[3.2, 1.5],
+                         gridspec_kw={"left": 0.075, "right": 0.985, "top": 0.93, "bottom": 0.16,
+                                      "wspace": 0.2, "hspace": 0.62})
 pictures = images()
 for column, (key, workflow) in enumerate(WORKFLOWS.items()):
     top, bottom = axes[0, column], axes[1, column]
@@ -199,14 +201,14 @@ for column, (key, workflow) in enumerate(WORKFLOWS.items()):
             if build != "main":
                 text += f"   {values['main'] / value:.1f}x faster"
             bottom.text(value, y, text, va="center", fontweight="bold" if build != "main" else "normal")
-    bottom.set_yticks([0.5, 3.1], list(groups))
+    bottom.set_yticks([0.5, 3.1], list(groups) if column == 0 else ["", ""])
     bottom.tick_params(axis="y", length=0)
     bottom.invert_yaxis()
     bottom.set_xlim(0, groups["with I/O"]["main"] * 1.5)
     bottom.set_xlabel("seconds")
     bottom.set_title(workflow["analysis"] + "\n" + workflow["data"], loc="left", fontsize=12, color="#444444")
 fig.legend(handles=[Patch(color=COLORS[build], label=build) for build in BUILDS],
-           loc="outside lower center", ncols=2, frameon=False)
+           loc="lower center", ncols=2, frameon=False)
 fig.text(0.995, 0.012, saved["machine"],
          ha="right", va="bottom", fontsize=8.5, color="#666666")
 fig.savefig(HERE / "summary.png", dpi=300, facecolor="white")
