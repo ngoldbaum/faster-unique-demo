@@ -40,8 +40,9 @@ def read(path):
     import tifffile
     return tifffile.imread(path)
 
+call = eval("lambda a: " + sys.argv[2])
 paths = []
-for path in map(Path, sys.argv[2:]):
+for path in map(Path, sys.argv[3:]):
     paths += sorted(path.glob("*.tif")) if path.is_dir() else [path]
 best = None
 for _ in range(int(sys.argv[1])):
@@ -50,7 +51,7 @@ for _ in range(int(sys.argv[1])):
         t0 = time.perf_counter()
         a = read(path)
         t1 = time.perf_counter()
-        np.unique(a)
+        call(a)
         seconds["read"] += t1 - t0
         seconds["unique"] += time.perf_counter() - t1
         del a
@@ -62,6 +63,8 @@ print(json.dumps(best))
 WORKFLOWS = {
     "embryo": {
         "title": "3D C. elegans cell tracking",
+        "analysis": "Nucleus volumes (return_counts)",
+        "call": "np.unique(a, return_counts=True)",
         "data": "Cell Tracking Challenge, 385 frames\nuint16, 4.9 billion voxels",
         "source": "doi:10.1038/s41592-023-01879-y",
         "paths": [DATA / "celegans/01", DATA / "celegans/02"],
@@ -69,19 +72,27 @@ WORKFLOWS = {
     },
     "neurons": {
         "title": "Fly brain neuron segmentation",
+        "analysis": "Relabel IDs (return_inverse)",
+        "call": "np.unique(a, return_inverse=True)",
         "data": "CREMI sample A, electron microscopy\nuint64, 195 million voxels",
+        "repeats": 2,
         "source": "cremi.org",
         "paths": [DATA / "cremi_sample_A.hdf"],
     },
     "atlas": {
         "title": "Mouse brain atlas annotation",
+        "analysis": "Region volumes (return_counts)",
+        "call": "np.unique(a, return_counts=True)",
         "data": "Allen Mouse Brain CCFv3, 25 µm\nuint32, 77 million voxels",
         "source": "doi:10.1016/j.cell.2020.04.007",
         "paths": [DATA / "allen_annotation_25.nrrd"],
     },
     "land": {
         "title": "Land cover classification",
+        "analysis": "Area per class (return_counts)",
+        "call": "np.unique(a, return_counts=True)",
         "data": "ESA WorldCover 2021, one tile\nuint8, 1.3 billion pixels",
+        "repeats": 2,
         "source": "doi:10.5281/zenodo.7254221",
         "paths": [DATA / "worldcover_N39W108.tif"],
     },
@@ -128,7 +139,8 @@ def measure():
     for key, workflow in WORKFLOWS.items():
         timings[key] = {}
         for build, python in BUILDS.items():
-            out = subprocess.run([python, "-c", WORKER, str(workflow.get("repeats", 3)), *map(str, workflow["paths"])],
+            out = subprocess.run([python, "-c", WORKER, str(workflow.get("repeats", 3)), workflow["call"],
+                                  *map(str, workflow["paths"])],
                                  capture_output=True, text=True, check=True)
             timings[key][build] = json.loads(out.stdout)
             print(f"{key:8s} {build:8s} read {timings[key][build]['read']:7.3f} s   "
@@ -167,7 +179,7 @@ if "machine" not in saved:
 timings = saved["timings"]
 
 plt.rcParams.update({"font.size": 13, "axes.spines.top": False, "axes.spines.right": False})
-fig, axes = plt.subplots(2, 4, figsize=(16, 6.2), height_ratios=[3.2, 1.5], layout="constrained")
+fig, axes = plt.subplots(2, 4, figsize=(16, 6.6), height_ratios=[3.2, 1.5], layout="constrained")
 pictures = images()
 for column, (key, workflow) in enumerate(WORKFLOWS.items()):
     top, bottom = axes[0, column], axes[1, column]
@@ -190,9 +202,9 @@ for column, (key, workflow) in enumerate(WORKFLOWS.items()):
     bottom.set_yticks([0.5, 3.1], list(groups))
     bottom.tick_params(axis="y", length=0)
     bottom.invert_yaxis()
-    bottom.set_xlim(0, groups["with I/O"]["main"] * 1.25)
+    bottom.set_xlim(0, groups["with I/O"]["main"] * 1.5)
     bottom.set_xlabel("seconds")
-    bottom.set_title(workflow["data"], loc="left", fontsize=12, color="#444444")
+    bottom.set_title(workflow["analysis"] + "\n" + workflow["data"], loc="left", fontsize=12, color="#444444")
 fig.legend(handles=[Patch(color=COLORS[build], label=build) for build in BUILDS],
            loc="outside lower center", ncols=2, frameon=False)
 fig.text(0.995, 0.012, saved["machine"],
