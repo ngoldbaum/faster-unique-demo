@@ -1,7 +1,19 @@
 # A faster `np.unique`: demo
 
-Compares `np.unique` in NumPy `main` with a build that has the changes in the
-`numpy` submodule, on real label data.
+The `numpy` submodule holds a proposed change to `np.unique`: lookup tables
+for integers in a small range, a faster hash set, optional results
+(`return_counts`, `return_inverse`, `return_index`) without sorting, and a
+fallback to sorting when hashing would not pay. This repository compares it
+with NumPy `main` on four real label datasets.
+
+![np.unique on main and with the change, on four datasets](summary.png)
+
+On an Apple M1 the `np.unique` call is 2.1x to 28x faster, and 1.4x to 16x
+faster when reading the file is counted too.
+[`demo-executed-apple-m1.ipynb`](demo-executed-apple-m1.ipynb) is the notebook
+with its outputs from that run. Its last section makes the figure.
+
+## Running it
 
     git clone --recurse-submodules <this repository>
     pixi run data      # downloads the data
@@ -26,3 +38,10 @@ slow server (allow an hour). The embryo cells load both movies into 8.6 GB of
 shared memory; set `FRAME_STEP = 2` in the notebook to halve that.
 
 After changing the submodule, rebuild with `pixi reinstall -e tables numpy`.
+
+## License
+
+The code in this repository is under the MIT license (see `LICENSE`). The
+`numpy` submodule has NumPy's own license. The datasets keep the terms of
+their publishers, which are named at the end of the notebook, and so do the
+images derived from them in `assets`, `summary.png` and the executed notebook.

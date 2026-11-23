@@ -169,47 +169,56 @@ def machine():
     return f"{cpu()}, {memory:.0f} GB, {system}, {compiler} {version}, Python {python}"
 
 
-if "--replot" in sys.argv:
-    saved = json.loads(TIMINGS.read_text())
-else:
-    saved = {"timings": measure()}
-if "machine" not in saved:
-    saved = {"machine": machine(), "timings": saved["timings"]}
-    TIMINGS.write_text(json.dumps(saved, indent=1) + "\n")
-timings = saved["timings"]
+def run(replot=False):
+    """Time the workflows in both builds, or load the timings of the last run."""
+    if replot:
+        saved = json.loads(TIMINGS.read_text())
+    else:
+        saved = {"machine": machine(), "timings": measure()}
+        TIMINGS.write_text(json.dumps(saved, indent=1) + "\n")
+    return saved
 
-plt.rcParams.update({"font.size": 13, "axes.spines.top": False, "axes.spines.right": False})
-fig, axes = plt.subplots(2, 4, figsize=(16, 6.8), height_ratios=[3.2, 1.5],
-                         gridspec_kw={"left": 0.075, "right": 0.985, "top": 0.93, "bottom": 0.16,
-                                      "wspace": 0.2, "hspace": 0.62})
-pictures = images()
-for column, (key, workflow) in enumerate(WORKFLOWS.items()):
-    top, bottom = axes[0, column], axes[1, column]
-    top.imshow(crop(pictures[key]), interpolation="nearest")
-    top.axis("off")
-    top.set_title(workflow["title"], loc="left", fontsize=13.5, fontweight="bold")
-    top.text(0, -0.02, workflow["source"], transform=top.transAxes, va="top", fontsize=8.5, color="#666666")
 
-    seconds = timings[key]
-    groups = {"np.unique": {n: seconds[n]["unique"] for n in BUILDS},
-              "with I/O": {n: seconds[n]["read"] + seconds[n]["unique"] for n in BUILDS}}
-    for g, values in enumerate(groups.values()):
-        for b, (build, value) in enumerate(values.items()):
-            y = g * 2.6 + b
-            bottom.barh(y, value, height=0.86, color=COLORS[build])
-            text = f" {value:.2f} s" if value < 10 else f" {value:.1f} s"
-            if build != "main":
-                text += f"   {values['main'] / value:.1f}x faster"
-            bottom.text(value, y, text, va="center", fontweight="bold" if build != "main" else "normal")
-    bottom.set_yticks([0.5, 3.1], list(groups) if column == 0 else ["", ""])
-    bottom.tick_params(axis="y", length=0)
-    bottom.invert_yaxis()
-    bottom.set_xlim(0, groups["with I/O"]["main"] * 1.5)
-    bottom.set_xlabel("seconds")
-    bottom.set_title(workflow["analysis"] + "\n" + workflow["data"], loc="left", fontsize=12, color="#444444")
-fig.legend(handles=[Patch(color=COLORS[build], label=build) for build in BUILDS],
-           loc="lower center", ncols=2, frameon=False)
-fig.text(0.995, 0.012, saved["machine"],
-         ha="right", va="bottom", fontsize=8.5, color="#666666")
-fig.savefig(HERE / "summary.png", dpi=300, facecolor="white")
-print("wrote", HERE / "summary.png")
+@plt.rc_context({"font.size": 13, "axes.spines.top": False, "axes.spines.right": False})
+def draw(saved):
+    """The summary figure for the timings from `run`."""
+    timings = saved["timings"]
+    fig, axes = plt.subplots(2, 4, figsize=(16, 6.8), height_ratios=[3.2, 1.5],
+                             gridspec_kw={"left": 0.075, "right": 0.985, "top": 0.93, "bottom": 0.16,
+                                          "wspace": 0.2, "hspace": 0.62})
+    pictures = images()
+    for column, (key, workflow) in enumerate(WORKFLOWS.items()):
+        top, bottom = axes[0, column], axes[1, column]
+        top.imshow(crop(pictures[key]), interpolation="nearest")
+        top.axis("off")
+        top.set_title(workflow["title"], loc="left", fontsize=13.5, fontweight="bold")
+        top.text(0, -0.02, workflow["source"], transform=top.transAxes, va="top", fontsize=8.5, color="#666666")
+
+        seconds = timings[key]
+        groups = {"np.unique": {n: seconds[n]["unique"] for n in BUILDS},
+                  "with I/O": {n: seconds[n]["read"] + seconds[n]["unique"] for n in BUILDS}}
+        for g, values in enumerate(groups.values()):
+            for b, (build, value) in enumerate(values.items()):
+                y = g * 2.6 + b
+                bottom.barh(y, value, height=0.86, color=COLORS[build])
+                text = f" {value:.2f} s" if value < 10 else f" {value:.1f} s"
+                if build != "main":
+                    text += f"   {values['main'] / value:.1f}x faster"
+                bottom.text(value, y, text, va="center", fontweight="bold" if build != "main" else "normal")
+        bottom.set_yticks([0.5, 3.1], list(groups) if column == 0 else ["", ""])
+        bottom.tick_params(axis="y", length=0)
+        bottom.invert_yaxis()
+        bottom.set_xlim(0, groups["with I/O"]["main"] * 1.5)
+        bottom.set_xlabel("seconds")
+        bottom.set_title(workflow["analysis"] + "\n" + workflow["data"], loc="left", fontsize=12, color="#444444")
+    fig.legend(handles=[Patch(color=COLORS[build], label=build) for build in BUILDS],
+               loc="lower center", ncols=2, frameon=False)
+    fig.text(0.995, 0.012, saved["machine"],
+             ha="right", va="bottom", fontsize=8.5, color="#666666")
+    return fig
+
+
+if __name__ == "__main__":
+    figure = draw(run(replot="--replot" in sys.argv))
+    figure.savefig(HERE / "summary.png", dpi=300, facecolor="white")
+    print("wrote", HERE / "summary.png")

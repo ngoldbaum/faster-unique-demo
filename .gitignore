@@ -1,4 +1,4 @@
 .pixi/
 data/
 .ipynb_checkpoints/
-demo-executed-*.ipynb
+__pycache__/
