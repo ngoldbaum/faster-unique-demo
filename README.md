@@ -11,7 +11,9 @@ with NumPy `main` on four real label datasets.
 On an Apple M1 the `np.unique` call is 2.1x to 28x faster, and 1.4x to 16x
 faster when reading the file is counted too.
 [`demo-executed-apple-m1.ipynb`](demo-executed-apple-m1.ipynb) is the notebook
-with its outputs from that run. Its last section makes the figure.
+with its outputs from that run, made with `DEMO_STATIC=1` so that it shows
+still frames where the live notebook has a movie player. Its last section makes
+the figure.
 
 ## Running it
 
